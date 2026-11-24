@@ -1,0 +1,14 @@
+git-commit(1)
+
+NAME
+       git-commit - Record changes to the repository
+
+SYNOPSIS
+       git commit [-a | --interactive | --patch] [-s] [-v] [-u<mode>]
+
+OPTIONS
+       -a, --all
+           Automatically stage files that have been modified and deleted.
+
+       -m <msg>, --message=<msg>
+           Use the given <msg> as the commit message.

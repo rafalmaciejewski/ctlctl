@@ -1,0 +1,5 @@
+Invalid command: --help
+Usage: rdma_ctl <status|enable|disable>
+  status  - Check if RDMA is enabled
+  enable  - Enable RDMA
+  disable - Disable RDMA

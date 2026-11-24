@@ -1,0 +1,28 @@
+usage: codecctl [-d | -x] [-p] [-u] [-H val] [-c width] [-f file] [codec|index|default] [sequence...]
+	-d	Use decimal register numbers
+	-x	Use hex register numbers
+	-H	Force headphone detect: true/false
+	-p	Ping codec (set exit status based on success)
+	-u	Match codec on HAL UID rather than name
+	-c	Set the column width (default is to expand to fit screen
+	-f	Dump output to file
+	-a	Dump all codec settings then quit
+
+Sequence options:	<reg> <value> <sleep_ms> 	Write register
+	dump                     	Read all registers
+	read <reg>               	Read single register
+	read <reg>,<count>       	Read register range
+	write <reg> <value>      	Write single register
+	mask <reg> <mask> <value>	Mask and write single register
+	patch <reg> <mask> <value>	This command can patch a register bitmask value similar to above
+	                          	'mask' command format, but only by patching that bitmask value in driver.
+	                          	When the underlying driver write a bitmask value during the runtime,
+	                          	the (address matched) bitmask patch will be applied. This can be used
+	                          	as driver tunable for some parameters, control logic register should
+	                          	not be patched.
+	patch reset			Remove all register bitmask patch, it will rest the underlying driver to its default behavior.
+	patch list			List all patched register bitmask list, it also show how many times underlying
+	          			driver actually write the patched bitmask.
+
+Specify no sequence for interactive mode
+

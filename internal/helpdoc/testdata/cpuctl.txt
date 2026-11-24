@@ -1,0 +1,36 @@
+usage: cpuctl [ list ]
+       cpuctl { offline | online } <cpu> [ <cpu>... ]
+
+
+CPUCTL(8)                             System Manager's Manual                            CPUCTL(8)
+
+NNAAMMEE
+     ccppuuccttll – program to control CPUs
+
+SSYYNNOOPPSSIISS
+     ccppuuccttll _c_o_m_m_a_n_d [_a_r_g_u_m_e_n_t_s]
+
+DDEESSCCRRIIPPTTIIOONN
+     The ccppuuccttll command can be used to control and inspect the state of CPUs in the system.
+
+     The first argument, _c_o_m_m_a_n_d, specifies the action to take.  Valid commands are:
+
+     list     For each CPU in the system, display the current state and time of the last state
+              change.
+
+     offline _c_p_u [_c_p_u _._._.]
+              Set the specified CPUs off line.
+
+              At least one CPU in the system must remain on line.
+
+     online _c_p_u [_c_p_u _._._.]
+              Set the specified CPUs on line.
+
+EEXXAAMMPPLLEESS
+     Run
+           cpuctl offline 2
+     and then
+           cpuctl list
+     The output should reflect the fact that CPU#2 was taken offline.
+
+Darwin                                    March 18, 2019                                 CPUCTL(8)

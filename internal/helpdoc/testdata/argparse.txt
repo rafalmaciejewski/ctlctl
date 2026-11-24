@@ -1,0 +1,15 @@
+usage: supervisorctl.py [-h] [-c FILE] [-v] {status,start,stop} ...
+
+Control supervisord processes.
+
+positional arguments:
+  {status,start,stop}
+    status              Show process status
+    start               Start a process
+    stop                Stop a process
+
+options:
+  -h, --help            show this help message and exit
+  -c FILE, --configuration FILE
+                        configuration file path (default: /etc/supervisord.conf)
+  -v, --verbose         be verbose

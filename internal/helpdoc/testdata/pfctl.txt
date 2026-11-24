@@ -1,0 +1,5 @@
+pfctl: illegal option -- -
+usage: pfctl [-AdeglhmNnOqRrvz] [-a anchor] [-D macro=value] [-F modifier]
+	[-f file] [-i interface] [-K host | network] [-k host | network]
+	[-o level] [-p device] [-s modifier] [-w interval]
+	[-t table -T command [address ...]] [-x level]

@@ -1,0 +1,311 @@
+dnclt [-acdeftTnNpqS] <command> where <command> is one of:
+{pipe|queue} N config PIPE-BODY
+[pipe|queue] {zero|delete|show} [N{,N}]
+
+
+DNCTL(8)                              System Manager's Manual                             DNCTL(8)
+
+NNAAMMEE
+     ddnnccttll – Traffic shaper control program
+
+SSYYNNOOPPSSIISS
+     ddnnccttll [--aannqqss] {lliisstt | sshhooww}
+     ddnnccttll [--ff | --qq] fflluusshh
+     ddnnccttll [--qq] {ddeelleettee} [_n_u_m_b_e_r _._._.]
+     ddnnccttll {ppiippee | qquueeuuee} _n_u_m_b_e_r ccoonnffiigg _c_o_n_f_i_g_-_o_p_t_i_o_n_s
+     ddnnccttll [--ss [_f_i_e_l_d]] {ppiippee | qquueeuuee} {ddeelleettee | lliisstt | sshhooww} [_n_u_m_b_e_r _._._.]
+     ddnnccttll [--nnqq] [--pp _p_r_e_p_r_o_c [_p_r_e_p_r_o_c_-_f_l_a_g_s]] _p_a_t_h_n_a_m_e
+
+DDEESSCCRRIIPPTTIIOONN
+     The ddnnccttll utility is the user interface for controlling the dummynet(4) traffic shaper.
+
+     dduummmmyynneett operates by first using a packet filter to classify packets and divide them into
+     _f_l_o_w_s, using any match pattern that can be used in ddnnccttll rules.  Depending on local policies,
+     a flow can contain packets for a single TCP connection, or from/to a given host, or entire
+     subnet, or a protocol type, etc.
+
+     Packets belonging to the same flow are then passed to either of two different objects, which
+     implement the traffic regulation:
+
+         _p_i_p_e    A pipe emulates a link with given bandwidth, propagation delay, queue size and
+                 packet loss rate.  Packets are queued in front of the pipe as they come out from
+                 the classifier, and then transferred to the pipe according to the pipe's
+                 parameters.
+
+         _q_u_e_u_e   A queue is an abstraction used to implement the WF2Q+ (Worst-case Fair Weighted
+                 Fair Queueing) policy, which is an efficient variant of the WFQ policy.
+                 The queue associates a _w_e_i_g_h_t and a reference pipe to each flow, and then all
+                 backlogged (i.e., with packets queued) flows linked to the same pipe share the
+                 pipe's bandwidth proportionally to their weights.  Note that weights are not
+                 priorities; a flow with a lower weight is still guaranteed to get its fraction of
+                 the bandwidth even if a flow with a higher weight is permanently backlogged.
+
+     In practice, _p_i_p_e_s can be used to set hard limits to the bandwidth that a flow can use,
+     whereas _q_u_e_u_e_s can be used to determine how different flow share the available bandwidth.
+
+     The _p_i_p_e and _q_u_e_u_e configuration commands are the following:
+
+           ppiippee _n_u_m_b_e_r ccoonnffiigg _p_i_p_e_-_c_o_n_f_i_g_u_r_a_t_i_o_n
+
+           qquueeuuee _n_u_m_b_e_r ccoonnffiigg _q_u_e_u_e_-_c_o_n_f_i_g_u_r_a_t_i_o_n
+
+     The following parameters can be configured for a pipe:
+
+     bbww _b_a_n_d_w_i_d_t_h | _d_e_v_i_c_e
+             Bandwidth, measured in [KK|MM]{bbiitt//ss|BByyttee//ss}.
+
+             A value of 0 (default) means unlimited bandwidth.  The unit must immediately follow
+             the number, as in
+
+                   dnctl pipe 1 config bw 300Kbit/s
+
+             If a device name is specified instead of a numeric value, as in
+
+                   dnctl pipe 1 config bw tun0
+
+             then the transmit clock is supplied by the specified device.  At the moment no device
+             supports this functionality.
+
+     ddeellaayy _m_s_-_d_e_l_a_y
+             Propagation delay, measured in milliseconds.  The value is rounded to the next
+             multiple of the clock tick (typically 10ms, but it is a good practice to run kernels
+             with “options HZ=1000” to reduce the granularity to 1ms or less).  Default value is
+             0, meaning no delay.
+
+     The following parameters can be configured for a queue:
+
+     ppiippee _p_i_p_e___n_r
+             Connects a queue to the specified pipe.  Multiple queues (with the same or different
+             weights) can be connected to the same pipe, which specifies the aggregate rate for
+             the set of queues.
+
+     wweeiigghhtt _w_e_i_g_h_t
+             Specifies the weight to be used for flows matching this queue.  The weight must be in
+             the range 1..100, and defaults to 1.
+
+     Finally, the following parameters can be configured for both pipes and queues:
+
+     bbuucckkeettss _h_a_s_h_-_t_a_b_l_e_-_s_i_z_e
+           Specifies the size of the hash table used for storing the various queues.  Default
+           value is 64 controlled by the sysctl(8) variable _n_e_t_._i_n_e_t_._i_p_._d_u_m_m_y_n_e_t_._h_a_s_h___s_i_z_e,
+           allowed range is 16 to 65536.
+
+     mmaasskk _m_a_s_k_-_s_p_e_c_i_f_i_e_r
+           Packets sent to a given pipe or queue by an ddnnccttll rule can be further classified into
+           multiple flows, each of which is then sent to a different _d_y_n_a_m_i_c pipe or queue.  A
+           flow identifier is constructed by masking the IP addresses, ports and protocol types as
+           specified with the mmaasskk options in the configuration of the pipe or queue.  For each
+           different flow identifier, a new pipe or queue is created with the same parameters as
+           the original object, and matching packets are sent to it.
+
+           Thus, when _d_y_n_a_m_i_c _p_i_p_e_s are used, each flow will get the same bandwidth as defined by
+           the pipe, whereas when _d_y_n_a_m_i_c _q_u_e_u_e_s are used, each flow will share the parent's pipe
+           bandwidth evenly with other flows generated by the same queue (note that other queues
+           with different weights might be connected to the same pipe).
+           Available mask specifiers are a combination of one or more of the following:
+
+           ddsstt--iipp _m_a_s_k, ddsstt--iipp66 _m_a_s_k, ssrrcc--iipp _m_a_s_k, ssrrcc--iipp66 _m_a_s_k, ddsstt--ppoorrtt _m_a_s_k, ssrrcc--ppoorrtt _m_a_s_k,
+           pprroottoo _m_a_s_k or aallll,
+
+           where the latter means all bits in all fields are significant.
+
+     nnooeerrrroorr
+           When a packet is dropped by a dummynet queue or pipe, the error is normally reported to
+           the caller routine in the kernel, in the same way as it happens when a device queue
+           fills up. Setting this option reports the packet as successfully delivered, which can
+           be needed for some experimental setups where you want to simulate loss or congestion at
+           a remote router.
+
+     ppllrr _p_a_c_k_e_t_-_l_o_s_s_-_r_a_t_e
+           Packet loss rate.  Argument _p_a_c_k_e_t_-_l_o_s_s_-_r_a_t_e is a floating-point number between 0 and
+           1, with 0 meaning no loss, 1 meaning 100% loss.  The loss rate is internally
+           represented on 31 bits.
+
+     qquueeuuee {_s_l_o_t_s | _s_i_z_eKKbbyytteess}
+           Queue size, in _s_l_o_t_s or KKBByytteess.  Default value is 50 slots, which is the typical queue
+           size for Ethernet devices.  Note that for slow speed links you should keep the queue
+           size short or your traffic might be affected by a significant queueing delay.  E.g., 50
+           max-sized ethernet packets (1500 bytes) mean 600Kbit or 20s of queue on a 30Kbit/s
+           pipe.  Even worse effect can result if you get packets from an interface with a much
+           larger MTU, e.g. the loopback interface with its 16KB packets.
+
+     rreedd | ggrreedd _w___q/_m_i_n___t_h/_m_a_x___t_h/_m_a_x___p
+           Make use of the RED (Random Early Detection) queue management algorithm.  _w___q and _m_a_x___p
+           are floating point numbers between 0 and 1 (0 not included), while _m_i_n___t_h and _m_a_x___t_h
+           are integer numbers specifying thresholds for queue management (thresholds are computed
+           in bytes if the queue has been defined in bytes, in slots otherwise).  The dummynet(4)
+           also supports the gentle RED variant (gred).
+
+           Three sysctl(8) variables can be used to control the RED behaviour:
+
+           _n_e_t_._i_n_e_t_._i_p_._d_u_m_m_y_n_e_t_._r_e_d___l_o_o_k_u_p___d_e_p_t_h
+                   specifies the accuracy in computing the average queue when the link is idle
+                   (defaults to 256, must be greater than zero)
+
+           _n_e_t_._i_n_e_t_._i_p_._d_u_m_m_y_n_e_t_._r_e_d___a_v_g___p_k_t___s_i_z_e
+                   specifies the expected average packet size (defaults to 512, must be greater
+                   than zero)
+
+           _n_e_t_._i_n_e_t_._i_p_._d_u_m_m_y_n_e_t_._r_e_d___m_a_x___p_k_t___s_i_z_e
+                   specifies the expected maximum packet size, only used when queue thresholds are
+                   in bytes (defaults to 1500, must be greater than zero).
+
+     The following options are available:
+
+     --aa      While listing, show counter values.  The sshhooww command just implies this option.
+
+     --ff      Don't ask for confirmation for commands that can cause problems if misused, i.e.
+             fflluusshh.  If there is no tty associated with the process, this is implied.
+
+     --hh      Displays a short help.
+
+     --nn      Only check syntax of the command strings, without actually passing them to the
+             kernel.
+
+     --qq      While aadddding, zzeerrooing, rreesseettllooggging or fflluusshhing, be quiet about actions (implies --ff).
+             This is useful for adjusting rules by executing multiple ddnnccttll commands in a script
+             or by processing a file of many ddnnccttll rules across a remote login session.  If a
+             fflluusshh is performed in normal (verbose) mode (with the default kernel configuration),
+             it prints a message.  Because all rules are flushed, the message might not be
+             delivered to the login session, causing the remote login session to be closed and the
+             remainder of the ruleset to not be processed.  Access to the console would then be
+             required to recover.
+
+     --ss [_f_i_e_l_d]
+             While listing pipes, sort according to one of the four counters (total or current
+             packets or bytes).
+
+     --vv      Be verbose.
+
+     To ease configuration, rules can be put into a file which is processed using ddnnccttll as shown
+     in the last synopsis line.  An absolute _p_a_t_h_n_a_m_e must be used.  The file will be read line by
+     line and applied as arguments to the ddnnccttll utility.
+
+     Optionally, a preprocessor can be specified using --pp _p_r_e_p_r_o_c where _p_a_t_h_n_a_m_e is to be piped
+     through.  Useful preprocessors include cpp(1) and m4(1).  If _p_r_e_p_r_o_c doesn't start with a
+     slash (‘/’) as its first character, the usual PATH name search is performed.  Care should be
+     taken with this in environments where not all file systems are mounted (yet) by the time
+     ddnnccttll is being run (e.g. when they are mounted over NFS).  Once --pp has been specified, any
+     additional arguments as passed on to the preprocessor for interpretation.  This allows for
+     flexible configuration files (like conditionalizing them on the local hostname) and the use
+     of macros to centralize frequently required arguments like IP addresses.
+
+CCHHEECCKKLLIISSTT
+     Here are some important points to consider when designing your rules:
+
+     ••   Remember that you filter both packets going iinn and oouutt.  Most connections need packets
+         going in both directions.
+
+     ••   Remember to test very carefully.  It is a good idea to be near the console when doing
+         this.
+
+     ••   Don't forget the loopback interface.
+
+SSYYSSCCTTLL VVAARRIIAABBLLEESS
+     A set of sysctl(8) variables controls the behaviour of the dduummmmyynneett module.  These are shown
+     below together with their default value (but always check with the sysctl(8) command what
+     value is actually in use) and meaning:
+
+     _n_e_t_._i_n_e_t_._i_p_._d_u_m_m_y_n_e_t_._e_x_p_i_r_e: 1
+             Lazily delete dynamic pipes/queue once they have no pending traffic.  You can disable
+             this by setting the variable to 0, in which case the pipes/queues will only be
+             deleted when the threshold is reached.
+
+     _n_e_t_._i_n_e_t_._i_p_._d_u_m_m_y_n_e_t_._h_a_s_h___s_i_z_e: 64
+             Default size of the hash table used for dynamic pipes/queues.  This value is used
+             when no bbuucckkeettss option is specified when configuring a pipe/queue.
+
+     _n_e_t_._i_n_e_t_._i_p_._d_u_m_m_y_n_e_t_._m_a_x___c_h_a_i_n___l_e_n: 16
+             Target value for the maximum number of pipes/queues in a hash bucket.  The product
+             mmaaxx__cchhaaiinn__lleenn**hhaasshh__ssiizzee is used to determine the threshold over which empty
+             pipes/queues will be expired even when nneett..iinneett..iipp..dduummmmyynneett..eexxppiirree==00.
+
+     _n_e_t_._i_n_e_t_._i_p_._d_u_m_m_y_n_e_t_._r_e_d___l_o_o_k_u_p___d_e_p_t_h: 256
+
+     _n_e_t_._i_n_e_t_._i_p_._d_u_m_m_y_n_e_t_._r_e_d___a_v_g___p_k_t___s_i_z_e: 512
+
+     _n_e_t_._i_n_e_t_._i_p_._d_u_m_m_y_n_e_t_._r_e_d___m_a_x___p_k_t___s_i_z_e: 1500
+             Parameters used in the computations of the drop probability for the RED algorithm.
+
+EEXXAAMMPPLLEESS
+     The following rules show some of the applications of for simulations and the like by using
+     _d_u_m_m_y_n_e_t rules in pf.conf(8) configuration files.
+
+     To drop random incoming IPv4 and IPv6 ICMP packets with a probability of 5%, create a pipe:
+           dnctl pipe 10 config plr 0.05
+
+     and add these rules in your pf.conf file:
+           dummynet in inet proto icmp all pipe 10
+           dummynet in inet6 proto ipv6-icmp all pipe 10
+
+     Should we want to simulate a bidirectional link with bandwidth limitations, the correct way
+     is to create a pipe for each direction:
+           dnctl pipe 1 config bw 14Kbit/s queue 10Kbytes
+           dnctl pipe 2 config bw 1Kbit/s queue 10Kbytes
+
+     and add these rules in your pf.conf file:
+           dummynet in all pipe 1
+           dummynet out all pipe 2
+
+     The above can be very useful, e.g. if you want to see how your fancy Web page will look for a
+     residential user who is connected only through a slow link.  You should not use only one pipe
+     for both directions, unless you want to simulate a half-duplex medium (e.g. AppleTalk,
+     Ethernet, IRDA).
+
+     Note that with the above rules the pipes receive traffic for both the IPv4 and IPv6
+     protocols.
+
+     Should we want to verify network performance with the RED queue management algorithm, create
+     this pipe:
+           dnctl pipe 1 config bw 500Kbit/s queue 100 red 0.002/30/80/0.1
+
+     and then add these rules to you pf.conf file:
+           dummynet all pipe 1
+
+     Another typical application of the traffic shaper is to introduce some delay in the
+     communication.  This can significantly affect applications which do a lot of Remote Procedure
+     Calls, and where the round-trip-time of the connection often becomes a limiting factor much
+     more than bandwidth:
+           dnctl pipe 1 config delay 250ms bw 1Mbit/s
+           dnctl pipe 2 config delay 250ms bw 1Mbit/s
+
+     and add these rules in your pf.conf file:
+           dummynet in all pipe 1
+           dummynet out all pipe 2
+
+     Per-flow queueing can be useful for a variety of purposes.  A very simple one is counting
+     traffic:
+           dnctl pipe 1 config mask all
+
+     and add these statements in your pf.conf file:
+           dummynet in quick proto tcp all pipe 1
+           dummynet out quick proto tcp all pipe 1
+           dummynet in quick proto udp all pipe 1
+           dummynet out quick proto udp all pipe 1
+           dummynet in quick all pipe 1
+           dummynet out quick all pipe 1
+
+     The above set of rules will create queues (and collect statistics) for all traffic.  Because
+     the pipes have no limitations, the only effect is collecting statistics.  Note that we need
+     six rules, not just the last two one, because when ddnnccttll tries to match IP packets it will
+     not consider ports, so we would not see connections on separate ports as different ones.
+
+SSEEEE AALLSSOO
+     cpp(1), dummynet(4), m4(1), ip(4), pfctl(8), pf.conf(5), protocols(5), services(5), sysctl(8)
+
+AAUUTTHHOORRSS
+     Ugen J. S. Antsilevich,
+     Poul-Henning Kamp,
+     Alex Nash,
+     Archie Cobbs,
+     Luigi Rizzo.
+
+     API based upon code written by Daniel Boulet for BSDI.
+
+     Work on dummynet(4) traffic shaper supported by Akamba Corp.
+
+HHIISSTTOORRYY
+     The ddnnccttll utility first appeared in FreeBSD 2.0.  dummynet(4) was introduced in
+     FreeBSD 2.2.8.  Stateful extensions were introduced in FreeBSD 4.0.
+
+Darwin                                    August 13, 2002                                 DNCTL(8)

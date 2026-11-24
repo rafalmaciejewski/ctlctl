@@ -1,0 +1,28 @@
+--help unknown command
+Usage: skywalkctl COMMAND { option | help }
+where COMMAND includes:
+	channel
+	flow
+	flow-adv
+	flow-owner
+	flow-route
+	flow-switch
+	interface
+	memory
+	netns
+	protons
+	netstat
+	provider
+	show
+	tree
+	log
+	status
+	enable
+	tcpinfo
+	flowidns
+	traffic-rule
+	redirect
+	aop
+	print-banner
+	channel-stats
+	list-providers

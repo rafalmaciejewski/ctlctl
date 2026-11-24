@@ -1,0 +1,43 @@
+usage: xsanctl command [arg [...]]
+   Available commands:
+      help 
+      ping 
+      firstBoot 
+      mount volumeName [options]
+      unmount volumeName [options]
+      list 
+      sanConfigChanged 
+      pushConfigUpdate 
+      createSan SAN_Name [createMaster options]
+      listSan 
+      joinSan SAN_Name --controller-name <ControllerName> --controller-user <ControllerAdminUserName> --controller-pass <ControllerAdminPassword> [createReplica options]
+      leaveSan 
+      removeControllerFromSan controllerName
+      activateSan [createReplica options]
+      cullSan SAN_Name
+      destroySan 
+      wipeConfig 
+      unloadProfile 
+      removeVolumeLockout Volume_Name
+      ldapConfigChanged 
+      dumpLdapConfig [--json]
+      changeIP oldIP newIP [oldFQDN newFQDN]
+      roleChanged 
+      disksChanged 
+      labelDisk [--force] --device <DeviceName> --label <LabelName>
+      createMaster --cert-auth-name <CertAuthName> --cert-admin-email <CertAdminEmail> --user <AdminFullName> --account <AdminAccountShortName> --pass <AdminPassword>
+      createReplica --master <MasterAddress> --account <AdminAccountShortName> --pass <AdminPassword>
+      destroyMaster [--force] --account <AdminAccountShortName> --pass <AdminPassword>
+      destroyReplica [--force] --account <AdminAccountShortName> --pass <AdminPassword>
+      exportClientProfile [--path <dirPath>] [--output <outputFile>]
+      importVolume volumeConfigFile
+      renameVolume oldName newName
+      startVolume volumeName
+      addVolume volumeName [volume configuration options]
+      editVolume volumeName [volume configuration options]
+      stopVolume [--force] volumeName
+      dropVolume [--force] volumeName
+      eraseVolume volumeName
+      dumpVolumeConfig [--volume <volumeName>]
+      listTask volumeName [--cleanup] [--wait]
+      listTasks [--cleanup]

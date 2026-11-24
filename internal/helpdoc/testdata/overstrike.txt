@@ -1,0 +1,8 @@
+NNAAMMEE
+       pfctl - control the packet filter
+
+SSYYNNOOPPSSIISS
+       ppffccttll [--AA]
+
+DDEESSCCRRIIPPTTIIOONN
+       --AA      Load only the queue rules.

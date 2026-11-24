@@ -1,0 +1,74 @@
+# yaml-language-server: $schema=https://goreleaser.com/static/schema.json
+# Builds the release binaries. CI runs it after tagging the version that svu
+# works out from the Conventional Commits since the last tag.
+version: 2
+
+project_name: ctlctl
+
+builds:
+  - id: ctlctl
+    main: .
+    binary: ctlctl
+    env:
+      - CGO_ENABLED=0
+    flags:
+      - -trimpath
+    ldflags:
+      - -s -w -X main.version={{ .Version }}
+    goos: [linux, darwin, windows, freebsd]
+    goarch: [amd64, arm64, arm]
+    goarm: ["7"]
+    ignore:
+      - goos: darwin
+        goarch: arm
+      - goos: windows
+        goarch: arm
+      - goos: freebsd
+        goarch: arm
+    mod_timestamp: "{{ .CommitTimestamp }}"
+
+archives:
+  - id: ctlctl
+    # No version in the name, so install.sh can use releases/latest/download.
+    name_template: "{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}{{ with .Arm }}v{{ . }}{{ end }}"
+    formats: [tar.gz]
+    format_overrides:
+      - goos: windows
+        formats: [zip]
+    files:
+      - README.md
+      - LICENSE
+
+checksum:
+  name_template: checksums.txt
+
+snapshot:
+  version_template: "{{ incpatch .Version }}-snapshot"
+
+changelog:
+  use: git
+  abbrev: 7
+  sort: asc
+  groups:
+    - title: Breaking changes
+      regexp: '^.*?\w+(\(.+\))?!:.+$'
+      order: 0
+    - title: Features
+      regexp: '^.*?feat(\(.+\))?:.+$'
+      order: 1
+    - title: Bug fixes
+      regexp: '^.*?(fix|perf)(\(.+\))?:.+$'
+      order: 2
+    - title: Other changes
+      order: 999
+  filters:
+    exclude:
+      - '^(docs|test|chore|ci|build|style|refactor)(\(.+\))?:'
+
+release:
+  footer: |
+    Install or update with:
+
+    ```sh
+    curl -fsSL https://raw.githubusercontent.com/rafalmaciejewski/ctlctl/main/install.sh | sh
+    ```

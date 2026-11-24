@@ -1,0 +1,7 @@
+Usage of serverctl:
+  -addr string
+    	listen address (default ":8080")
+  -debug
+    	enable debug logging
+  -workers int
+    	number of workers (default 4)

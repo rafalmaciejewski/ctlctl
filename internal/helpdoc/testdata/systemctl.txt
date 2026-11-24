@@ -1,0 +1,31 @@
+systemctl [OPTIONS...] COMMAND ...
+
+Query or send control commands to the system manager.
+
+Unit Commands:
+  list-units [PATTERN...]             List units currently in memory
+  list-sockets [PATTERN...]           List socket units currently in memory,
+                                      ordered by address
+  start UNIT...                       Start (activate) one or more units
+  stop UNIT...                        Stop (deactivate) one or more units
+  set-property UNIT PROPERTY=VALUE... Sets one or more properties of a unit
+  help PATTERN...|PID...              Show manual for one or more units
+
+System Commands:
+  is-system-running                   Check whether system is fully running
+  switch-root [ROOT [INIT]]           Change to a different root file system
+
+Options:
+  -h --help              Show this help
+     --version           Show package version
+     --system            Connect to system manager
+  -H --host=[USER@]HOST  Operate on remote host
+  -t --type=TYPE         List units of a particular type
+     --state=STATE       List units with particular LOAD or SUB or ACTIVE state
+  -p --property=NAME     Show only properties by this name
+  -a --all               Show all properties/all units currently in memory,
+                         including dead/empty ones. To list all units installed
+                         on the system, use 'list-unit-files' instead.
+     --no-pager          Do not pipe output into a pager
+
+See the systemctl(1) man page for details.

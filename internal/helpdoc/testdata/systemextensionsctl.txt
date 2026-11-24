@@ -1,0 +1,6 @@
+systemextensionsctl: usage:
+	systemextensionsctl developer [on|off]
+	systemextensionsctl list [category]
+	systemextensionsctl reset  - reset all System Extensions state
+	systemextensionsctl uninstall <teamID> <bundleID>; teamID can also be '-' (for matching empty Team ID)
+	systemextensionsctl gc  - garbage collect orphaned system extension(s)

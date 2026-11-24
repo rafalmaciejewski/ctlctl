@@ -1,0 +1,14 @@
+ncctl [ options ] command [ command_options] [ path ...]
+where options are:
+where commands are:
+list | get              : List the principals on the specified mounts for this audit session. Takes no options.
+unset | destroy         : Unset the principals on the specified mounts for this audit session. Takes no options.
+set | init              : Set the suplied principal on the specified mounts for this audit session. Options:
+	-F, --force     : Set the principal even if it does not exist in the kerberos cache collection.
+	-p, --principal : Set the given principal --principal[=]<principal>
+			  on the mounts specified. This option is required.
+
+	If no paths are specifed, act on all currently mounted NFS file systems.
+	-v, --verbose   : Verbose output.
+	-P, --nofollow  : If a path argument is given that is a symbolic link, do not follow
+			  the link, but use the link itself to determine the mount point.

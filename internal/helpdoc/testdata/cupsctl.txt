@@ -1,0 +1,10 @@
+Usage: cupsctl [options] [param=value … paramN=valueN]
+Options:
+-E                      Encrypt the connection to the server
+-h server[:port]        Connect to the named server and port
+-U username             Specify username to use for authentication
+--[no-]debug-logging    Turn debug logging on/off
+--[no-]remote-admin     Turn remote administration on/off
+--[no-]remote-any       Allow/prevent access from the Internet
+--[no-]share-printers   Turn printer sharing on/off
+--[no-]user-cancel-any  Allow/prevent users to cancel any job
