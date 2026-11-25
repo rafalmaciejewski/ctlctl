@@ -91,8 +91,6 @@ func (m *Model) moveTree(delta int) tea.Cmd {
 // glyph returns the expander shown before a node's name.
 func (m *Model) glyph(n *node) string {
 	switch {
-	case n.state == stateLoading:
-		return spinnerFrames[m.frame%len(spinnerFrames)]
 	case n.state == stateLoaded && len(n.children) == 0:
 		return "·"
 	case n.expanded:
@@ -100,6 +98,14 @@ func (m *Model) glyph(n *node) string {
 	}
 	return "▸"
 }
+
+// busy reports whether n's help is on its way: loading, or selected and
+// about to load once the cursor rests on it.
+func (m *Model) busy(n *node) bool {
+	return n.state == stateLoading || (n == m.sel && n.state == stateIdle)
+}
+
+func (m *Model) spinner() string { return spinnerFrames[m.frame%len(spinnerFrames)] }
 
 func (m *Model) renderTree(r rect) []string {
 	in := r.inner()
@@ -140,10 +146,17 @@ func (m *Model) renderTree(r rect) []string {
 		b.WriteString(base.Render(" "))
 		b.WriteString(highlightMatch(n.name, f, base, base.Inherit(m.st.match)))
 		line := b.String()
-		w := lipgloss.Width(line)
-		if w > in.w {
-			line = ansi.Truncate(line, in.w-1, "") + base.Render("…")
-		} else {
+		// The loading spinner goes after the name and survives truncation.
+		suffix := ""
+		if m.busy(n) && in.w > 6 {
+			suffix = " " + m.spinner()
+		}
+		avail := in.w - lipgloss.Width(suffix)
+		if w := lipgloss.Width(line); w > avail {
+			line = ansi.Truncate(line, avail-1, "") + base.Render("…")
+		}
+		line += glyphStyle.Render(suffix)
+		if w := lipgloss.Width(line); w < in.w {
 			line += base.Render(strings.Repeat(" ", in.w-w))
 		}
 		body[i] = line

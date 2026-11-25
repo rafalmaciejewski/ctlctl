@@ -45,18 +45,30 @@ func textLine(text string, kind ...helpdoc.Kind) helpdoc.Line {
 	return l
 }
 
+// shownNode is the node whose help the pane shows. Until the selection's
+// help is loaded, the pane keeps the help it already shows, so it changes
+// once, straight to the new help, instead of flashing a placeholder. The
+// loading indicators are in the pane's title and the tree.
+func (m *Model) shownNode() *node {
+	n := m.sel
+	if n == nil || n.state == stateLoaded {
+		return n
+	}
+	if p := m.infoNode; p != nil && p.state == stateLoaded {
+		return p
+	}
+	return n
+}
+
 // buildInfo recomputes the help pane's content when what it shows changed.
 func (m *Model) buildInfo() {
-	n := m.sel
+	n := m.shownNode()
 	width := m.infoWidth()
 	state := loadState(0)
 	if n != nil {
 		state = n.state
 	}
 	key := fmt.Sprintf("%p/%d/%d/%v", n, state, width, m.showHelp)
-	if state == stateLoading {
-		key += fmt.Sprint("/", m.frame)
-	}
 	if key == m.info.key {
 		return
 	}
@@ -86,20 +98,12 @@ func (m *Model) buildInfo() {
 			}
 			add(nil, textLine("  "+l, k))
 		}
-	case n.state != stateLoaded && n.parent != nil && n.parent.helpDoc() != nil:
-		// Until its own help arrives, show the parent's at the subcommand's
-		// line, so the pane doesn't go blank while moving through the tree.
-		// The title shows that it's loading.
-		anc := n.parent.docNode()
-		add(anc, anc.doc.Lines...)
-		if c := anc.doc.FindCommand(n.name); c != nil {
-			v.mark = c.Line
-		}
 	case n.state != stateLoaded:
+		// Nothing to keep on screen yet: the first help ctlctl loads.
 		if n.desc != "" {
 			add(nil, textLine(n.desc, helpdoc.KindText), textLine(""))
 		}
-		add(nil, textLine(spinnerFrames[m.frame%len(spinnerFrames)]+" Loading the help of "+n.key()+"…", helpdoc.KindComment))
+		add(nil, textLine("Loading the help of "+n.key()+"…", helpdoc.KindComment))
 	case n.inherited != nil:
 		anc := n.inherited
 		add(nil,
@@ -281,7 +285,7 @@ func (m *Model) renderInfo(r rect) []string {
 		if m.sel.state == stateLoaded {
 			right = m.sel.docNode().source
 		} else {
-			right = spinnerFrames[m.frame%len(spinnerFrames)] + " loading"
+			right = m.spinner() + " loading"
 		}
 	}
 	return m.box(r, title, right, m.focus == focusInfo, body, scrollbar{total: len(m.info.rows), visible: in.h, offset: m.infoScroll})

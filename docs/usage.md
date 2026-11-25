@@ -22,7 +22,9 @@ ctlctl docker             # any tool works when you name it
   marks something you can open, and `·` a command without subcommands.
 - **Help** (right): the help of the selected command, highlighted. When a
   subcommand has no help of its own, this shows the tool's help with the
-  subcommand's line highlighted.
+  subcommand's line highlighted. While a command's help loads, the pane keeps
+  the previous help, and a spinner shows after the command's name in the
+  tree and in the pane's title.
 - **Command** (bottom): the command that will run. It follows the selection
   in the tree, so the tool and subcommands are already filled in. What you
   type is kept per subcommand while you move around the tree.

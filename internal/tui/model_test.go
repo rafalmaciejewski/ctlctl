@@ -384,18 +384,61 @@ func TestInferredSubcommandsSettleWithoutLoading(t *testing.T) {
 	}
 }
 
-func TestLoadingShowsTheParentHelp(t *testing.T) {
-	h := newHarness(t, "kubectl") // opens kubectl's subcommands
-	expose := h.m.roots[0].children[1]
-	// Select without letting the debounced load run.
-	h.m.selectNode(expose)
-	if expose.state == stateLoaded {
-		t.Fatal("kubectl expose should still be loading")
+func TestLoadingKeepsThePreviousHelp(t *testing.T) {
+	h := newHarness(t, "kubectl", "get")
+	get := h.m.sel
+	if get.name != "get" || get.state != stateLoaded {
+		t.Fatalf("selected %s in state %d", get.name, get.state)
 	}
-	h.wantScreen("kubectl expose ─")
+	h.screen()
+	h.m.infoScroll = 5
+	h.screen()
+	key, scroll := h.m.info.key, h.m.infoScroll
+
+	// Move to a subcommand without letting its debounced load run: the
+	// help pane keeps kubectl get's help where it was, and the title and the
+	// tree say that kubectl config is loading.
+	config := get.parent.child("config")
+	h.m.selectNode(config)
+	if config.state == stateLoaded {
+		t.Fatal("kubectl config should still be loading")
+	}
+	h.wantScreen("kubectl config ─")
 	h.wantScreen(" loading ─╮")
-	h.wantScreen("Basic Commands (Beginner):")
-	if !strings.Contains(h.m.info.lines[h.m.info.mark].Text, "expose") {
-		t.Fatalf("mark = %q", h.m.info.lines[h.m.info.mark].Text)
+	h.wantScreen("config " + h.m.spinner())
+	if h.m.info.key != key || h.m.infoScroll != scroll {
+		t.Fatalf("help pane changed while loading: scroll %d, want %d", h.m.infoScroll, scroll)
+	}
+	if strings.Contains(strings.Join(h.screen(), "\n"), "Loading the help") {
+		t.Fatal("the help pane showed a loading screen")
+	}
+
+	// Once loaded, it switches straight to kubectl config's help, at the top.
+	h.run(h.m.load(config))
+	h.wantScreen("Modify kubeconfig files")
+	if h.m.info.key == key || h.m.shownNode() != config {
+		t.Fatal("the help pane didn't switch to kubectl config")
+	}
+	if h.m.infoScroll != 0 {
+		t.Fatalf("scroll = %d after the new help arrived", h.m.infoScroll)
+	}
+	if strings.Contains(strings.Join(h.screen(), "\n"), "config "+h.m.spinner()) {
+		t.Fatal("the tree still shows a spinner")
+	}
+}
+
+func TestFirstLoadShowsPlaceholder(t *testing.T) {
+	m := New(Options{
+		Tools:   []discover.Tool{{Name: "kubectl", Path: "/bin/kubectl"}},
+		History: history.Open(""),
+		Output:  &bytes.Buffer{},
+		Load:    fakeLoad,
+	})
+	m.Update(tea.WindowSizeMsg{Width: 120, Height: 30}) // the load isn't run
+	screen := ansi.Strip(m.View())
+	for _, want := range []string{"Loading the help of kubectl…", "kubectl " + m.spinner(), " loading ─╮"} {
+		if !strings.Contains(screen, want) {
+			t.Errorf("%q not on screen:\n%s", want, screen)
+		}
 	}
 }

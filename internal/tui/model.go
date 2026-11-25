@@ -65,8 +65,8 @@ type Model struct {
 
 	info       infoView
 	infoScroll int
-	infoNode   *node
-	infoState  loadState
+	infoNode   *node     // the node whose help the pane shows
+	infoState  loadState // and its state then
 	hover      targetRef
 	infoSel    int // index into info.targets, or -1
 
